@@ -1,0 +1,9 @@
+;; shadow-cljs configuration
+{:deps {:aliases [:repl :cljs]}
+ :port 7002
+ :dev-http {8080 "resources/public"}
+ :builds {:app {:target :browser
+                :modules {:main {:init-fn todo.core/init}}
+                :output-dir "resources/public/js"
+                :devtools {:pre-loads [devtools.preload]}
+                :nrepl {:init-ns todo.core}}}}
