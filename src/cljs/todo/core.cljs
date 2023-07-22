@@ -42,7 +42,7 @@
                 :on-click
                 (fn [_e]
                   (rf/dispatch 
-                   [:todo.todo/new 30 @title false])
+                   [:todo.todo/new @title])
                   (js/console.log "clicked"))}]]))
   )
 

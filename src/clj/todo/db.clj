@@ -10,6 +10,7 @@
   (d/db conn))
 
 (comment
+  (get-db)
   (m/stop)
   (m/start)
   )

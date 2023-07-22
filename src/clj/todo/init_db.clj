@@ -10,6 +10,7 @@
     :db/valueType :db.type/bigint
     :db/cardinality :db.cardinality/one
     :db/unique :db.unique/identity
+    :db/index true
     :db/doc "Todo item id"}
 
    {:db/ident :todo/title

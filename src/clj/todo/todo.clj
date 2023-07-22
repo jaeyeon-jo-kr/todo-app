@@ -15,23 +15,39 @@
 (comment 
  (json/write-str {:a.b "abc"}))
 
+(defn get-proper-id
+  [id-coll]
+  (reduce (fn [cand id]
+            (if (= cand id)
+              (inc cand)
+              (reduced cand))) 1 id-coll))
+
+(defn id-list
+  []
+  (map first
+       (d/q `[:find ?id
+              :where
+              [?e :todo/id ?id]] (db/get-db))))
 
 (defn handle-post
-  [{{id :id
-     title :title
-     completed :completed} :body-params}]
-  (log/debug id title completed)
+  [{{title :title} :body-params}] 
   (try
     (r/response
      (do
        (d/transact db/conn
-                   [{:todo/id (bigint id)
+                   [{:todo/id (bigint (get-proper-id (id-list)))
                      :todo/title title
-                     :todo/completed completed}])
+                     :todo/completed false}])
        (json/write-str "success!")))
     (catch Exception e
       (response (str (.getMessage e)
-                     {:id id :title title :completed completed})))))
+                     {:title title})))))
+
+(comment 
+  (d/transact db/conn
+              [{:todo/id (bigint (get-proper-id (id-list)))
+                :todo/title "dasdf"
+                :todo/completed false}]))
 
 (defn handle-get
   [{{id :id} :path-params}]
@@ -61,7 +77,11 @@
                 [?e :todo/completed ?completed]] (db/get-db)))
     {:escape-unicode true})))
 
-
+(comment 
+  
+  
+  
+  )
 
 
 (defn handle-update
