@@ -27,7 +27,7 @@
   (map first
        (d/q `[:find ?id
               :where
-              [?e :todo/id ?id]] (db/get-db))))
+              [?e :todo/id ?id]] db/db)))
 
 (defn handle-post
   [{{title :title} :body-params}] 
@@ -61,7 +61,7 @@
                   [?e :todo/id ?id]
                   [?e :todo/id ~id]
                   [?e :todo/completed ?completed]]
-                (db/get-db)))
+                db/db))
       {:escape-unicode true}))))
 
 
@@ -70,18 +70,17 @@
   (r/response
    (json/write-str
     (map format-item
-         (d/q `[:find ?id ?title ?completed
+         (d/q `[:find ?id ?title ?completed ?description ?value
                 :where
-                [?e :todo/title ?title]
-                [?e :todo/id ?id]
-                [?e :todo/completed ?completed]] (db/get-db)))
+                [?todo :todo/title ?title]
+                [?todo :todo/id ?id]
+                [?todo :todo/completed ?completed]
+                [?todo-color :todo-color/color-id ?color-id]
+                [?todo-color :todo-color/todo-id ?id]
+                [?color :color/color-id ?color-id]
+                [?color :color/description ?description]
+                [?color :color/value ?value]] db/db))
     {:escape-unicode true})))
-
-(comment 
-  
-  
-  
-  )
 
 
 (defn handle-update
@@ -94,13 +93,15 @@
        (d/transact db/conn [{:todo/id (bigint id)
                              :todo/title title
                              :todo/completed completed}])
-
        (json/write-str {:result "success"})))
      
     (r/not-found (r/response (str req))))
   )
 
 (comment 
+  (d/transact db/conn [{:todo/id (bigint 2)
+                        :todo/title "updated"
+                        :todo/completed false}])
   (r/not-found (r/response "")))
 
 (def routes

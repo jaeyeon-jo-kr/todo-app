@@ -2,17 +2,10 @@
   (:require [mount.core :as m]
             [datomic.api :as d]))
 
+(def uri "datomic:dev://localhost:4334/todo")
+
 (m/defstate conn
-  :start (d/connect "datomic:dev://localhost:4334/todo"))
+  :start (d/connect uri))
 
-(defn get-db
-  []
-  (d/db conn))
-
-(comment
-  (get-db)
-  (m/stop)
-  (m/start)
-  )
-
-
+(m/defstate db
+  :start (d/db conn))
