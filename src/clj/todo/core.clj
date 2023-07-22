@@ -1,5 +1,4 @@
-(ns todo.core
-  (:gen-class)
+(ns todo.core 
   (:require
    [clojure.tools.logging :as log]
    [ring.middleware.params :as params]

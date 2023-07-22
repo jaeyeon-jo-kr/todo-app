@@ -20,17 +20,48 @@
            title])))
 
 
-(defn list-component
+(defn todo-list
   []
   (rf/dispatch [:todo.todo/load nil])
   (fn []
     (let [sample-list @(rf/subscribe [:todo])]
       (reduce todo-item [:ul] sample-list))))
 
+(defn todo-new
+  []
+  (let [title (r/atom "")]
+    (fn []
+      [:div "New Todo : "
+       [:input {:type "text"
+                :on-change 
+                (fn [e]
+                  (r/rswap! title 
+                            (fn []
+                              (-> e .-target .-value))))}]
+       [:input {:type "button" :value "submit"
+                :on-click
+                (fn [_e]
+                  (rf/dispatch 
+                   [:todo.todo/new 30 @title false])
+                  (js/console.log "clicked"))}]]))
+  )
+
+(comment 
+  ((todo-list)))
+
+(defn todo-component
+  []
+  (fn []
+    [:div
+     [:p "TODO list : "]
+     ((todo-list))
+     ((todo-new))]))
+
+
 (defn ^:export init
   [& _params]
   (re-dom/render
-   [list-component]
+   [todo-component]
    (.getElementById js/document "app")))
 
 

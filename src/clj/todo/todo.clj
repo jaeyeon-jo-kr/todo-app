@@ -28,18 +28,10 @@
                    [{:todo/id (bigint id)
                      :todo/title title
                      :todo/completed completed}])
-       "success!"))
+       (json/write-str "success!")))
     (catch Exception e
       (response (str (.getMessage e)
                      {:id id :title title :completed completed})))))
-
-(comment 
-  
-  (r/response (d/transact db/conn
-                          [{:todo/id (bigint 3)
-                            :todo/title "logging"
-                            :todo/completed false}]))
-  )
 
 (defn handle-get
   [{{id :id} :path-params}]
@@ -70,6 +62,8 @@
     {:escape-unicode true})))
 
 
+
+
 (defn handle-update
   [{{id :id
      title :title
@@ -93,7 +87,14 @@
   ["/todo"
    ["/all" {:get {:handler handle-get-all}}]
    ["/get/:id" {:get {:handler handle-get}}]
-   ["/new" {:post {:handler handle-post}}]
+   ["/new" {:post 
+            {:coercion reitit.coercion.malli/coercion
+             :parameters {:body-params
+                          [:map
+                           [:id int?]
+                           [:title string?]
+                           [:completed boolean?]]}
+             :handler handle-post}}]
    ["/update" {:post
                {:coercion reitit.coercion.malli/coercion
                 :parameters {:body-params
