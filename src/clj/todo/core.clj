@@ -1,31 +1,29 @@
 (ns todo.core
-  (:require
-   [todo.db]
-   [clojure.tools.logging :as log]
-   [ring.middleware.reload :refer [wrap-reload]]
-   [mount.core :as m]
-   [ring.adapter.jetty :as jetty]
-   [todo.app :refer [app]]))
+  (:require 
+   [clojure.tools.logging :as log] 
+   [todo.db :as db]
+   [todo.app :as app]))
 
-(defn reloaded-app
-  [app]
-  (wrap-reload #'app))
+(defn start!
+  []
+  (db/start!)
+  (app/start!))
 
-(m/defstate server 
-  "Start server"
-  :start (jetty/run-jetty
-          #'app
-          {:port 3022 :join? false})
-  :stop #(.stop %))
+(defn stop!
+  []
+  (db/stop!)
+  (app/stop!))
 
 
-(defn -main
+(defn main
   [& params]
   (log/info "start server")
-  (m/start))
+  (start!))
 
 (comment
-  (m/stop)
+  (start!)
 
   )
+
+
 

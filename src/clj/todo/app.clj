@@ -1,19 +1,18 @@
 (ns todo.app
-  (:require
-   [todo.db]
-   [todo.todo :as todo]
-   [todo.color :as color]
+  (:require 
    [clojure.tools.logging :as log]
    [ring.middleware.params :as params]
    [reitit.ring.middleware.muuntaja :as muuntaja]
    [muuntaja.core :as mc]
    [reitit.ring.coercion :as coercion]
    [reitit.coercion.spec]
-   [reitit.ring :as ring] 
-    
+   [reitit.ring :as ring]
    [reitit.interceptor.sieppari]
    [ring.util.response :as res]
-   ))
+   [todo.todo :as todo]
+   [todo.color :as color]
+   [ring.middleware.reload :refer [wrap-reload]]
+   [ring.adapter.jetty :as jetty]))
 
 (defn wrap-cors
   [handler]
@@ -57,10 +56,26 @@
                          coercion/coerce-request-middleware]}})
    (ring/create-default-handler)))
 
+(defn reloaded-app
+  [app]
+  (wrap-reload #'app {:dirs ["src/clj"]}))
+
+(defonce server (atom nil))
+
+(defn start!
+  []
+  (reset! server (jetty/run-jetty
+                  (reloaded-app #'app)
+                  {:port 3022 :join? false})))
+
+(defn stop!
+  []
+  (swap! server #(.stop %)))
+
 (comment
-  (m/start)
-  (m/start db/conn)
-  (m/stop)
+  (start!)
+  (stop!)
+  
   (app {:origin "http://localhost:808"
         :request-method :get
         :uri "/todo/get/1"})

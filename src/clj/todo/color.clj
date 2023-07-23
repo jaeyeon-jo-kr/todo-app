@@ -4,26 +4,42 @@
             [datomic.api :as d]
             [reitit.coercion.malli]
             [ring.util.response :as r :refer [response]]
-            [todo.db :as db]))
+            [todo.db :refer [conn db]]))
+
+(defn get-proper-id
+  [id-coll]
+  (reduce (fn [cand id]
+            (if (= cand id)
+              (inc cand)
+              (reduced cand))) 1 id-coll))
+
+
+(defn id-list
+  []
+  (map first
+       (d/q `[:find ?id
+              :where
+              [?e :color/id ?id]] @db)))
+
 
 (defn handle-new
-  [{{description :description
+  [{{name :name
      value :value} :body-params}]
   (try
     (r/response
      (do
-       (d/transact db/conn
-                   [{:color/id (random-uuid)
-                     :color/description description
+       (d/transact @conn
+                   [{:color/id (get-proper-id (id-list))
+                     :color/name name
                      :color/value value}])
        (json/write-str "success!")))
     (catch Exception e
       (response (str (.getMessage e))))))
 
 (defn format-item
-  [[id description value]]
+  [[id name value]]
   {:id id
-   :description description
+   :name name
    :value value})
 
 (defn handle-get
@@ -38,7 +54,7 @@
                   [?e :todo/id ?id]
                   [?e :todo/id ~id]
                   [?e :todo/completed ?completed]]
-                db/db))
+                @db))
       {:escape-unicode true}))))
 
 
@@ -47,24 +63,24 @@
   (r/response
    (json/write-str
     (map format-item
-         (d/q `[:find ?id ?description ?value
+         (d/q `[:find ?id ?name ?value
                 :where
                 [?e :color/id ?id]
-                [?e :color/description ?description]
-                [?e :color/value ?value]] db/db))
+                [?e :color/name ?name]
+                [?e :color/value ?value]] @db))
     {:escape-unicode true})))
 
 
 (defn handle-update
   [{{id :id 
-     description :description
+     name :name
      value :value} :body-params :as req}]
   (if id
     (r/response
      (do
-       (d/transact db/conn
-                   [{:color/id (parse-uuid id)
-                     :color/description description
+       (d/transact @conn
+                   [{:color/id id
+                     :color/name name
                      :color/value value}])
        (json/write-str {:result "success"})))
 
@@ -79,14 +95,15 @@
             {:coercion reitit.coercion.malli/coercion
              :parameters {:body-params
                           [:map
-                           [:description string?]
+                           [:name string?]
                            [:value string?]]}
              :handler handle-new}}]
    ["/update" {:post
                {:coercion reitit.coercion.malli/coercion
                 :parameters {:body-params
                              [:map
-                              [:id uuid?]
-                              [:description string?]
+                              [:id number?]
+                              [:name string?]
                               [:value string?]]}
                 :handler handle-update}}]])
+

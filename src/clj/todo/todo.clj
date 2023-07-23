@@ -4,16 +4,7 @@
             [datomic.api :as d]
             [reitit.coercion.malli]
             [ring.util.response :as r :refer [response]]
-            [todo.db :as db]))
-
-(defn format-item
-  [[id title completed]]
-  {:id id
-   :title title
-   :completed completed})
-
-(comment 
- (json/write-str {:a.b "abc"}))
+            [todo.db :refer [conn db]]))
 
 (defn get-proper-id
   [id-coll]
@@ -22,20 +13,26 @@
               (inc cand)
               (reduced cand))) 1 id-coll))
 
+(defn format-item
+  [[id title completed]]
+  {:id id
+   :title title
+   :completed completed})
+
 (defn id-list
   []
   (map first
        (d/q `[:find ?id
               :where
-              [?e :todo/id ?id]] db/db)))
+              [?e :todo/id ?id]] @db)))
 
 (defn handle-post
   [{{title :title} :body-params}] 
   (try
     (r/response
      (do
-       (d/transact db/conn
-                   [{:todo/id (bigint (get-proper-id (id-list)))
+       (d/transact @conn
+                   [{:todo/id (get-proper-id (id-list))
                      :todo/title title
                      :todo/completed false}])
        (json/write-str "success!")))
@@ -44,10 +41,11 @@
                      {:title title})))))
 
 (comment 
-  (d/transact db/conn
-              [{:todo/id (bigint (get-proper-id (id-list)))
-                :todo/title "dasdf"
+  (d/transact @conn
+              [{:todo/id (get-proper-id (id-list))
+                :todo/title "test"
                 :todo/completed false}]))
+
 
 (defn handle-get
   [{{id :id} :path-params}]
@@ -61,7 +59,7 @@
                   [?e :todo/id ?id]
                   [?e :todo/id ~id]
                   [?e :todo/completed ?completed]]
-                db/db))
+               @db))
       {:escape-unicode true}))))
 
 
@@ -70,17 +68,29 @@
   (r/response
    (json/write-str
     (map format-item
-         (d/q `[:find ?id ?title ?completed ?description ?value
+         (d/q `[:find ?id ?title ?completed ?name ?value
                 :where
                 [?todo :todo/title ?title]
                 [?todo :todo/id ?id]
                 [?todo :todo/completed ?completed]
+                [(get-else $ ?todo-color :todo-color/todo-id "Unknown") ?id]
                 [?todo-color :todo-color/color-id ?color-id]
-                [?todo-color :todo-color/todo-id ?id]
-                [?color :color/color-id ?color-id]
-                [?color :color/description ?description]
-                [?color :color/value ?value]] db/db))
+                [?color :color/id ?color-id]
+                [?color :color/name ?name]
+                [?color :color/value ?value]
+                ] @db))
     {:escape-unicode true})))
+
+(comment 
+  (def details-expr [:todo/id :todo/title :todo/completed :color/name])
+  (def find-expr '[:find (d/pull e? details-expr)
+                   :in $ details-expr
+                   :where [?e :todo/title]])
+  (d/q find-expr @db details-expr)
+  (d/index-pull )
+  (d/pull @db [:todo/id :todo/title] [:todo/id 1])
+  (d/pull @db [:todo-color/color-id] [:todo/id])
+  )
 
 
 (defn handle-update
@@ -90,19 +100,13 @@
   (if id
     (r/response
      (do
-       (d/transact db/conn [{:todo/id (bigint id)
-                             :todo/title title
-                             :todo/completed completed}])
+       (d/transact @conn [{:todo/id id
+                           :todo/title title
+                           :todo/completed completed}])
        (json/write-str {:result "success"})))
      
     (r/not-found (r/response (str req))))
   )
-
-(comment 
-  (d/transact db/conn [{:todo/id (bigint 2)
-                        :todo/title "updated"
-                        :todo/completed false}])
-  (r/not-found (r/response "")))
 
 (def routes
   ["/todo"
@@ -124,3 +128,4 @@
                               [:title string?]
                               [:completed boolean?]]}
                 :handler handle-update}}]])
+
