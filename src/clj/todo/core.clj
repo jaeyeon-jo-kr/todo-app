@@ -2,7 +2,9 @@
   (:require 
    [clojure.tools.logging :as log] 
    [todo.db :as db]
-   [todo.app :as app]))
+   [todo.app :as app]
+   [todo.color]
+   [todo.todo]))
 
 (defn start!
   []

@@ -18,13 +18,17 @@
     :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one
     :db/doc "Todo title"}
+   
+   {:db/ident :todo/title-color-id
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one
+    :db/doc "Todo title color id."}
 
    {:db/ident :todo/completed
     :db/valueType :db.type/boolean
     :db/cardinality :db.cardinality/one
     :db/doc "Todo completed."}
-
-
+   
    {:db/ident :color/id
     :db/valueType :db.type/long
     :db/unique :db.unique/identity
@@ -38,17 +42,7 @@
 
    {:db/ident :color/value
     :db/valueType :db.type/string
-    :db/cardinality :db.cardinality/one}
-
-   {:db/ident :todo-color/todo-id
-    :db/cardinality :db.cardinality/one
-    :db/valueType :db.type/ref
-    :db/doc "Color-todo todo-id"}
-
-   {:db/ident :todo-color/color-id
-    :db/cardinality :db.cardinality/one
-    :db/valueType :db.type/ref
-    :db/doc "Color-todo todo-id"}])
+    :db/cardinality :db.cardinality/one}])
 
 (def sample-data
   [{:todo/id 1
@@ -57,30 +51,37 @@
    {:todo/id 2
     :todo/title "title 2"
     :todo/completed true}
+   {:todo/id 3
+    :todo/title "title 3"
+    :todo/completed true
+    :todo/title-color-id 1}
    {:color/id 1
     :color/name "color-1"
     :color/value "#FF1122"}
    {:color/id 2
     :color/name "color-2"
     :color/value "#311122"}
-   {:todo-color/todo-id 1
-    :todo-color/color-id 1}
-   {:todo-color/todo-id 2
-    :todo-color/color-id 2}
-   #_[:db/add (bigint 1) :todo-color/color-id color-id1]
-   #_[:db/add (bigint 2) :todo-color/color-id color-id2]])
+   {:color/id 3
+    :color/name "color-3"
+    :color/value "#311162"}])
 
 
 (defn start!
   []
+  (d/create-database uri)
   (reset! conn (d/connect uri))
   (reset! db (d/db @conn))
-  (d/create-database uri)
   (d/transact @conn todo-schema)
-  (d/transact @conn sample-data))
+  (d/transact @conn sample-data)
+  (reset! conn (d/connect uri))
+  (reset! db (d/db @conn)))
 
 (defn stop!
   []
   (d/delete-database uri)
   (d/release @conn))
+
+(comment 
+  (start!)
+  (stop!))
 
