@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]
             [day8.re-frame.http-fx]
             [re-frame.core :as rf]
-            [ajax.core :as ajax]))
+            [ajax.core :as ajax]
+            [clojure.core :as c]))
 
 (rf/reg-event-db
  ::load-error
@@ -30,9 +31,7 @@
 
 (rf/reg-sub
  ::items 
- (fn [db]
-   (js/console.debug "subscribe db : "
-                     (::items db))
+ (fn [db] 
    (::items db)))
 
 (rf/reg-event-db
@@ -102,13 +101,16 @@
               (rf/dispatch [:todo.todo/load nil]))}
            title])))
 
+(def todo-items
+  (comp (partial reduce todo-item [:ul])
+        (partial sort-by :id)))
+
 
 (defn todo-list
   []
   (rf/dispatch [:todo.todo/load nil])
   (fn []
-    (let [sample-list @(rf/subscribe [::items])]
-      (reduce todo-item [:ul] sample-list))))
+    (todo-items @(rf/subscribe [::items]))))
 
 (defn todo-new
   []
@@ -135,7 +137,6 @@
      [:p "TODO list : "]
      ((todo-list))
      #_(todo-new)]))
-
 
 (comment 
   

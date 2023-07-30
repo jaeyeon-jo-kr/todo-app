@@ -1,10 +1,8 @@
 (ns todo.core
   (:require 
    [clojure.tools.logging :as log] 
-   [todo.db :as db]
-   [todo.app :as app]
-   [todo.color]
-   [todo.todo]))
+   [todo.db :as db] 
+   [todo.app :as app]))
 
 (defn start!
   []
@@ -24,7 +22,7 @@
 
 (comment
   (start!)
-
+(stop!)
   )
 
 

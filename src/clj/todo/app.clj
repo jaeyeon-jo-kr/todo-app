@@ -8,11 +8,13 @@
    [reitit.coercion.spec]
    [reitit.ring :as ring]
    [reitit.interceptor.sieppari]
-   [ring.util.response :as res]
-   [todo.todo :as todo]
-   [todo.color :as color]
+   [ring.util.response :as res] 
    [ring.middleware.reload :refer [wrap-reload]]
-   [ring.adapter.jetty :as jetty]))
+   [ring.adapter.jetty :as jetty]
+   [todo.states :refer [server]]
+   [todo.db]
+   [todo.todo :as todo]
+   [todo.color :as color]))
 
 (defn wrap-cors
   [handler]
@@ -56,16 +58,12 @@
                          coercion/coerce-request-middleware]}})
    (ring/create-default-handler)))
 
-(defn reloaded-app
-  [app]
-  (wrap-reload #'app {:dirs ["src/clj"]}))
 
-(defonce server (atom nil))
+
 
 (defn start!
   []
-  (reset! server (jetty/run-jetty
-                  (reloaded-app #'app)
+  (reset! server (jetty/run-jetty #'app 
                   {:port 3022 :join? false})))
 
 (defn stop!

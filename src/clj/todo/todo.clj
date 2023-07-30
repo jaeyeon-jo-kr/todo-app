@@ -4,10 +4,11 @@
             [datomic.api :as d]
             [reitit.coercion.malli]
             [ring.util.response :as r :refer [response]]
-            [todo.db :refer [conn db]]
+            [todo.states :refer [conn db]]
             [clojure.core :as c]
             [todo.color :as color]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [todo.db :as db]))
 
 (defn get-proper-id
   [id-coll]
@@ -44,8 +45,17 @@
                      {:title title})))))
 
 (comment 
+  (d/q '[:find ?id ?title ?completed ?title-color-id
+         :where
+         [?todo :todo/title ?title]
+         [?todo :todo/id ?id]
+         [?todo :todo/completed ?completed]
+         [(get-else $ ?todo :todo/title-color-id :none) ?title-color-id]]
+       @db)
+  (d/transact @conn [{:todo/id 1
+                      :todo/completed false}])
   (d/transact @conn
-              [{:todo/id (get-proper-id (id-list))
+              [{:todo/id 2
                 :todo/title "test"
                 :todo/completed false}]))
 
@@ -109,7 +119,14 @@
        (d/transact @conn [{:todo/id id
                            :todo/title title
                            :todo/completed completed}])
-       (json/write-str {:result "success"})))
+       (db/refresh)
+       (json/write-str
+        {:result
+         (str "updated : \n"
+              {:todo/id id
+               :todo/title title
+               :todo/completed completed}
+              "\nsuccess")})))
 
     (r/not-found (r/response (str req)))))
 
@@ -134,3 +151,14 @@
                               [:completed boolean?]]}
                 :handler handle-update}}]])
 
+(comment
+  (d/q '[:find ?id ?title ?completed ?title-color-id
+         :where
+         [?todo :todo/title ?title]
+         [?todo :todo/id ?id]
+         [?todo :todo/completed ?completed]
+         [(get-else $ ?todo :todo/title-color-id :none) ?title-color-id]]
+       @db)
+  (d/transact @conn [{:todo/id 4
+                      :todo/title "asdf"
+                      :todo/completed false}]))

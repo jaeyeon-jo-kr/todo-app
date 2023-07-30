@@ -1,8 +1,8 @@
 (ns todo.db
-  (:require [datomic.api :as d]))
+  (:require [datomic.api :as d]
+            [todo.states :refer [db conn]]))
 
-(defonce db (atom nil))
-(defonce conn (atom nil))
+
 
 (def uri "datomic:dev://localhost:4334/todo")
 
@@ -64,6 +64,11 @@
    {:color/id 3
     :color/name "color-3"
     :color/value "#311162"}])
+
+(defn refresh
+  []
+  (reset! conn (d/connect uri))
+  (reset! db (d/db @conn)))
 
 
 (defn start!

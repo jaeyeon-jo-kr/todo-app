@@ -4,7 +4,7 @@
             [datomic.api :as d]
             [reitit.coercion.malli]
             [ring.util.response :as r :refer [response]]
-            [todo.db :refer [conn db]]))
+            [todo.states :refer [conn db]]))
 
 (defn get-proper-id
   [id-coll]
