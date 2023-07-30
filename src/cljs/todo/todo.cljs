@@ -5,15 +5,15 @@
             [ajax.core :as ajax]))
 
 (rf/reg-event-db
- ::todo-load-error
+ ::load-error
  (fn [db [_ result]]
    (js/console.error "error : " result)
-   (assoc db :todo-list [])))
+   (assoc db ::items [])))
 
 (rf/reg-event-db
- ::todo-load-result
+ ::load-result
  (fn [db [_ result]] 
-   (assoc db :todo-list result)))
+   (assoc db ::items result)))
 
 (rf/reg-event-fx
  ::load
@@ -25,26 +25,26 @@
      :timeout 8000 
      :format          (ajax/json-request-format)
      :response-format (ajax/json-response-format {:keywords? true})
-     :on-success [::todo-load-result]
-     :on-failure [::todo-load-error]}}))
+     :on-success [::load-result]
+     :on-failure [::load-error]}}))
 
 (rf/reg-sub
- :todo 
+ ::items 
  (fn [db]
    (js/console.debug "subscribe db : "
-                     (:todo-list db))
-   (:todo-list db)))
+                     (::items db))
+   (::items db)))
 
 (rf/reg-event-db
- ::todo-update-error
+ ::update-error
  (fn [db [_ result]]
    (js/console.error "error : " result)
-   (assoc db :todo-list [])))
+   (assoc db ::items [])))
 
 (rf/reg-event-db
- ::todo-update-result
+ ::update-result
  (fn [db [_ result]]
-   (assoc db :todo-list result)))
+   (assoc db ::items result)))
 
 (rf/reg-event-fx
  ::update
@@ -58,19 +58,19 @@
      :timeout 8000
      :format          (ajax/json-request-format)
      :response-format (ajax/json-response-format {:keywords? true})
-     :on-success [::todo-update-result]
-     :on-failure [::todo-update-error]}}))
+     :on-success [::update-result]
+     :on-failure [::update-error]}}))
 
 (rf/reg-event-db
- ::todo-new-error
+ ::new-error
  (fn [db [_ result]]
    (js/console.error "error : " result)
-   (assoc db :todo-list [])))
+   (assoc db ::items [])))
 
 (rf/reg-event-db
- ::todo-new-success
+ ::new-success
  (fn [db [_ result]] 
-   (assoc db :todo-list result)))
+   (assoc db ::items result)))
 
 (rf/reg-event-fx
  ::new
@@ -84,8 +84,8 @@
      :timeout 8000
      :format          (ajax/json-request-format)
      :response-format (ajax/json-response-format {:keywords? true})
-     :on-success [::todo-new-success]
-     :on-failure [::todo-new-error]}}))
+     :on-success [::new-success]
+     :on-failure [::new-error]}}))
 
 (defn todo-item
   [ul {:keys [id title completed]}]
@@ -107,7 +107,7 @@
   []
   (rf/dispatch [:todo.todo/load nil])
   (fn []
-    (let [sample-list @(rf/subscribe [:todo])]
+    (let [sample-list @(rf/subscribe [::items])]
       (reduce todo-item [:ul] sample-list))))
 
 (defn todo-new

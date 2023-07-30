@@ -87,6 +87,22 @@
     (r/not-found (r/response (str req)))))
 
 
+(defn query-all-colors
+  []
+  (set
+   (map #(assoc {}
+                :color/id (first %)
+                :color/name (second %)
+                :color/value (nth % 2))
+        (d/q '[:find ?id ?name ?value
+               :where
+               [?color :color/name ?name]
+               [?color :color/id ?id]
+               [?color :color/value ?value]]
+             @db))))
+
+
+
 (def routes
   ["/color"
    ["/all" {:get {:handler handle-get-all}}]
